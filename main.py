@@ -679,7 +679,7 @@ def ser_send():
                     guess_value['R7'] = guess_value_now.get('R7')
 
             # 判断飞镖的目标是否切换，切换则尝试发动双倍易伤
-            if target != target_last and target != 0:
+            if target != target_last:
                 target_last = target
                 # 有双倍易伤机会，并且当前没有在双倍易伤
                 if double_vulnerability_chance > 0 and opponent_double_vulnerability == 0:
@@ -765,7 +765,8 @@ def ser_receive():
                     double_vulnerability_chance, opponent_double_vulnerability = Radar_decision(received_data2)
                 if target_result is not None:
                     received_cmd_id3, received_data3, received_seq3 = target_result
-                    target = (list(received_data3)[1] & 0b1100000) >> 5
+                    target = (list(received_data3)[1] & 0b1100000) >> 6  # 0x0105
+                    # print(target)
 
                 # 从缓冲区中移除已解析的数据包
                 buffer = buffer[sof_index + len(packet_data):]
