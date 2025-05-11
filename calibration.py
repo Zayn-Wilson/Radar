@@ -4,19 +4,14 @@ import sys
 
 import cv2
 import numpy as np
-from PyQt5.QtCore import Qt, QTimer
-from PyQt5.QtGui import QPixmap, QImage, QTextCursor
-from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QPushButton, QVBoxLayout, QHBoxLayout, QTextEdit, QGridLayout
+from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtGui import QPixmap, QImage, QTextCursor
+from PyQt6.QtWidgets import QApplication, QWidget, QLabel, QPushButton, QVBoxLayout, QHBoxLayout, QTextEdit, QGridLayout
 
 from hik_camera import call_back_get_image, start_grab_and_get_data_size, close_and_destroy_device, set_Value, \
     get_Value, image_control
 
-if sys.platform.startswith("win"):    
-    sys.path.append("./MvImport")
-    from MvImport.MvCameraControl_class import *
-else:
-    sys.path.append("./MvImport_Linux")
-    from MvImport_Linux.MvCameraControl_class import *
+from MvImport_Linux.MvCameraControl_class import *
 import yaml
 with open("config.yaml", "r", encoding="utf-8") as f:  # 指定 UTF-8 编码
     config = yaml.safe_load(f)
@@ -107,7 +102,7 @@ def hik_camera_get():
 
     # 设置设备的一些参数
     set_Value(cam, param_type="float_value", node_name="ExposureTime", node_value=16000)  # 曝光时间
-    set_Value(cam, param_type="float_value", node_name="Gain", node_value=17.9)  # 增益值
+    set_Value(cam, param_type="float_value", node_name="Gain", node_value=16.0)  # 增益值
     # 开启设备取流
     start_grab_and_get_data_size(cam)
     # 主动取流方式抓取图像
@@ -252,20 +247,17 @@ class MyUI(QWidget):
         self.setLayout(hbox)
         self.setGeometry(0, 0, 1900, 1000)
         self.setWindowTitle('Calibration UI')
-        self.setWindowFlags(Qt.FramelessWindowHint)
+        self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
         self.show()
 
     def keyPressEvent(self, event):
-        if event.key() == Qt.Key_Escape:
+        # 按下键盘事件
+        if event.key() == Qt.Key.Key_Escape:
             self.close()
-        elif event.key() == Qt.Key_Space and sys.platform.startswith("linux"):
-            os.system("xdotool key Escape")
 
     def update_images(self):
-
         left_pixmap = self.convert_cvimage_to_pixmap(self.left_image)
         self.left_top_label.setPixmap(left_pixmap)
-
 
         right_pixmap = self.convert_cvimage_to_pixmap(self.right_image)
         self.right_top_label.setPixmap(right_pixmap)
@@ -280,8 +272,8 @@ class MyUI(QWidget):
     def left_top_clicked(self, event):
         # 图像点击事件
         if not self.capturing:
-            x = int(event.pos().x() * self.left_scale_x)
-            y = int(event.pos().y() * self.left_scale_y)
+            x = int(event.position().x() * self.left_scale_x)
+            y = int(event.position().y() * self.left_scale_y)
 
             self.image_points[self.height][self.image_count % 4] = (x, y)
 
@@ -297,8 +289,8 @@ class MyUI(QWidget):
     def right_top_clicked(self, event):
         # 地图点击事件
         if not self.capturing:
-            x = int(event.pos().x() * self.right_scale_x)
-            y = int(event.pos().y() * self.right_scale_y)
+            x = int(event.position().x() * self.right_scale_x)
+            y = int(event.position().y() * self.right_scale_y)
             self.map_points[self.height][self.map_count % 4] = (x, y)
 
             cv2.circle(self.right_image, (int(x / self.right_scale_x), int(y / self.right_scale_y)), 4,
@@ -351,7 +343,7 @@ class MyUI(QWidget):
     def convert_cvimage_to_pixmap(self, cvimage):
         height, width, channel = cvimage.shape
         bytes_per_line = 3 * width
-        qimage = QImage(cvimage.data, width, height, bytes_per_line, QImage.Format_RGB888)
+        qimage = QImage(cvimage.data, width, height, bytes_per_line, QImage.Format.Format_RGB888)
         pixmap = QPixmap.fromImage(qimage)
         return pixmap
 
@@ -364,7 +356,7 @@ class MyUI(QWidget):
         self.left_bottom_text.setPlainText(current_text + '\n' + text)
         # 自动向下滚动文本组件
         cursor = self.left_bottom_text.textCursor()
-        cursor.movePosition(QTextCursor.End)
+        cursor.movePosition(QTextCursor.MoveOperation.End)
         self.left_bottom_text.setTextCursor(cursor)
 
 
@@ -389,4 +381,4 @@ if __name__ == '__main__':
         time.sleep(0.5)
     app = QApplication(sys.argv)
     myui = MyUI()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())

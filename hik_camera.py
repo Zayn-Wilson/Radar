@@ -4,10 +4,14 @@ import sys
 import numpy as np
 from os import getcwd
 import cv2
-# import msvcrt
 from ctypes import *
+if sys.platform.startswith("win"):
+    msvcrt = ctypes.CDLL("msvcrt")
+else:
+    libc = ctypes.CDLL("libc.so.6")
 
-if sys.platform.startswith("win"):    
+
+if sys.platform.startswith("win"):
     sys.path.append("./MvImport")
     from MvImport.MvCameraControl_class import *
 else:
@@ -456,8 +460,12 @@ def access_get_image(cam, active_way="getImagebuffer"):
                 print("get one frame: Width[%d], Height[%d], nFrameNum[%d]" % (
                     stOutFrame.stFrameInfo.nWidth, stOutFrame.stFrameInfo.nHeight, stOutFrame.stFrameInfo.nFrameNum))
                 pData = (c_ubyte * stOutFrame.stFrameInfo.nWidth * stOutFrame.stFrameInfo.nHeight)()
-                cdll.msvcrt.memcpy(byref(pData), stOutFrame.pBufAddr,
-                                   stOutFrame.stFrameInfo.nWidth * stOutFrame.stFrameInfo.nHeight)
+                if sys.platform.startswith("win"):
+                    msvcrt.memcpy(byref(pData), stOutFrame.pBufAddr,
+                                  stOutFrame.stFrameInfo.nWidth * stOutFrame.stFrameInfo.nHeight)
+                else:
+                    libc.memcpy(byref(pData), stOutFrame.pBufAddr,
+                                stOutFrame.stFrameInfo.nWidth * stOutFrame.stFrameInfo.nHeight)
                 data = np.frombuffer(pData, count=int(stOutFrame.stFrameInfo.nWidth * stOutFrame.stFrameInfo.nHeight),
                                      dtype=np.uint8)
                 image_control(data=data, stFrameInfo=stOutFrame.stFrameInfo)
@@ -465,8 +473,13 @@ def access_get_image(cam, active_way="getImagebuffer"):
                 print("get one frame: Width[%d], Height[%d], nFrameNum[%d]" % (
                     stOutFrame.stFrameInfo.nWidth, stOutFrame.stFrameInfo.nHeight, stOutFrame.stFrameInfo.nFrameNum))
                 pData = (c_ubyte * stOutFrame.stFrameInfo.nWidth * stOutFrame.stFrameInfo.nHeight)()
-                cdll.msvcrt.memcpy(byref(pData), stOutFrame.pBufAddr,
-                                   stOutFrame.stFrameInfo.nWidth * stOutFrame.stFrameInfo.nHeight)
+                if sys.platform.startswith("win"):
+                    msvcrt.memcpy(byref(pData), stOutFrame.pBufAddr,
+                                  stOutFrame.stFrameInfo.nWidth * stOutFrame.stFrameInfo.nHeight)
+                else:
+                    libc.memcpy(byref(pData), stOutFrame.pBufAddr,
+                                stOutFrame.stFrameInfo.nWidth * stOutFrame.stFrameInfo.nHeight)
+
                 data = np.frombuffer(pData, count=int(stOutFrame.stFrameInfo.nWidth * stOutFrame.stFrameInfo.nHeight),
                                      dtype=np.uint8)
                 image_control(data=data, stFrameInfo=stOutFrame.stFrameInfo)
@@ -474,8 +487,13 @@ def access_get_image(cam, active_way="getImagebuffer"):
                 print("get one frame: Width[%d], Height[%d], nFrameNum[%d]" % (
                     stOutFrame.stFrameInfo.nWidth, stOutFrame.stFrameInfo.nHeight, stOutFrame.stFrameInfo.nFrameNum))
                 pData = (c_ubyte * stOutFrame.stFrameInfo.nWidth * stOutFrame.stFrameInfo.nHeight * 3)()
-                cdll.msvcrt.memcpy(byref(pData), stOutFrame.pBufAddr,
-                                   stOutFrame.stFrameInfo.nWidth * stOutFrame.stFrameInfo.nHeight * 3)
+                if sys.platform.startswith("win"):
+                    msvcrt.memcpy(byref(pData), stOutFrame.pBufAddr,
+                                  stOutFrame.stFrameInfo.nWidth * stOutFrame.stFrameInfo.nHeight)
+                else:
+                    libc.memcpy(byref(pData), stOutFrame.pBufAddr,
+                                stOutFrame.stFrameInfo.nWidth * stOutFrame.stFrameInfo.nHeight)
+
                 data = np.frombuffer(pData,
                                      count=int(stOutFrame.stFrameInfo.nWidth * stOutFrame.stFrameInfo.nHeight * 3),
                                      dtype=np.uint8)
@@ -484,8 +502,13 @@ def access_get_image(cam, active_way="getImagebuffer"):
                 print("get one frame: Width[%d], Height[%d], nFrameNum[%d]" % (
                     stOutFrame.stFrameInfo.nWidth, stOutFrame.stFrameInfo.nHeight, stOutFrame.stFrameInfo.nFrameNum))
                 pData = (c_ubyte * stOutFrame.stFrameInfo.nWidth * stOutFrame.stFrameInfo.nHeight * 2)()
-                cdll.msvcrt.memcpy(byref(pData), stOutFrame.pBufAddr,
-                                   stOutFrame.stFrameInfo.nWidth * stOutFrame.stFrameInfo.nHeight * 2)
+                if sys.platform.startswith("win"):
+                    msvcrt.memcpy(byref(pData), stOutFrame.pBufAddr,
+                                  stOutFrame.stFrameInfo.nWidth * stOutFrame.stFrameInfo.nHeight)
+                else:
+                    libc.memcpy(byref(pData), stOutFrame.pBufAddr,
+                                stOutFrame.stFrameInfo.nWidth * stOutFrame.stFrameInfo.nHeight)
+
                 data = np.frombuffer(pData,
                                      count=int(stOutFrame.stFrameInfo.nWidth * stOutFrame.stFrameInfo.nHeight * 2),
                                      dtype=np.uint8)
@@ -531,36 +554,47 @@ def image_callback(pData, pFrameInfo, pUser):
     img_buff = None
     stFrameInfo = cast(pFrameInfo, POINTER(MV_FRAME_OUT_INFO_EX)).contents
     if stFrameInfo:
-        # print("get one frame: Width[%d], Height[%d], nFrameNum[%d]" % (
-        # stFrameInfo.nWidth, stFrameInfo.nHeight, stFrameInfo.nFrameNum))
         print(stFrameInfo.enPixelType)
 
     if img_buff is None and stFrameInfo.enPixelType == 17301505:
         img_buff = (c_ubyte * stFrameInfo.nWidth * stFrameInfo.nHeight)()
-        cdll.msvcrt.memcpy(byref(img_buff), pData, stFrameInfo.nWidth * stFrameInfo.nHeight)
+        if sys.platform.startswith("win"):
+            msvcrt.memcpy(byref(img_buff), pData, stFrameInfo.nWidth * stFrameInfo.nHeight)
+        else:
+            libc.memcpy(byref(img_buff), pData, stFrameInfo.nWidth * stFrameInfo.nHeight)
         data = np.frombuffer(img_buff, count=int(stFrameInfo.nWidth * stFrameInfo.nHeight), dtype=np.uint8)
-        image_control(data=data, stFrameInfo=stFrameInfo)
-        del img_buff
-    elif img_buff is None and stFrameInfo.enPixelType == 17301513:
-        print(123)
-        img_buff = (c_ubyte * stFrameInfo.nWidth * stFrameInfo.nHeight)()
-        cdll.msvcrt.memcpy(byref(img_buff), pData, stFrameInfo.nWidth * stFrameInfo.nHeight)
-        data = np.frombuffer(img_buff, count=int(stFrameInfo.nWidth * stFrameInfo.nHeight), dtype=np.uint8)
-        image_control(data=data, stFrameInfo=stFrameInfo)
-        del img_buff
-    elif img_buff is None and stFrameInfo.enPixelType == 35127316:
-        img_buff = (c_ubyte * stFrameInfo.nWidth * stFrameInfo.nHeight * 3)()
-        cdll.msvcrt.memcpy(byref(img_buff), pData, stFrameInfo.nWidth * stFrameInfo.nHeight * 3)
-        data = np.frombuffer(img_buff, count=int(stFrameInfo.nWidth * stFrameInfo.nHeight * 3), dtype=np.uint8)
-        image_control(data=data, stFrameInfo=stFrameInfo)
-        del img_buff
-    elif img_buff is None and stFrameInfo.enPixelType == 34603039:
-        img_buff = (c_ubyte * stFrameInfo.nWidth * stFrameInfo.nHeight * 2)()
-        cdll.msvcrt.memcpy(byref(img_buff), pData, stFrameInfo.nWidth * stFrameInfo.nHeight * 2)
-        data = np.frombuffer(img_buff, count=int(stFrameInfo.nWidth * stFrameInfo.nHeight * 2), dtype=np.uint8)
         image_control(data=data, stFrameInfo=stFrameInfo)
         del img_buff
 
+    elif img_buff is None and stFrameInfo.enPixelType == 17301513:
+        img_buff = (c_ubyte * stFrameInfo.nWidth * stFrameInfo.nHeight)()
+        if sys.platform.startswith("win"):
+            msvcrt.memcpy(byref(img_buff), pData, stFrameInfo.nWidth * stFrameInfo.nHeight)
+        else:
+            libc.memcpy(byref(img_buff), pData, stFrameInfo.nWidth * stFrameInfo.nHeight)
+        data = np.frombuffer(img_buff, count=int(stFrameInfo.nWidth * stFrameInfo.nHeight), dtype=np.uint8)
+        image_control(data=data, stFrameInfo=stFrameInfo)
+        del img_buff
+
+    elif img_buff is None and stFrameInfo.enPixelType == 35127316:
+        img_buff = (c_ubyte * stFrameInfo.nWidth * stFrameInfo.nHeight * 3)()
+        if sys.platform.startswith("win"):
+            msvcrt.memcpy(byref(img_buff), pData, stFrameInfo.nWidth * stFrameInfo.nHeight * 3)
+        else:
+            libc.memcpy(byref(img_buff), pData, stFrameInfo.nWidth * stFrameInfo.nHeight * 3)
+        data = np.frombuffer(img_buff, count=int(stFrameInfo.nWidth * stFrameInfo.nHeight * 3), dtype=np.uint8)
+        image_control(data=data, stFrameInfo=stFrameInfo)
+        del img_buff
+
+    elif img_buff is None and stFrameInfo.enPixelType == 34603039:
+        img_buff = (c_ubyte * stFrameInfo.nWidth * stFrameInfo.nHeight * 2)()
+        if sys.platform.startswith("win"):
+            msvcrt.memcpy(byref(img_buff), pData, stFrameInfo.nWidth * stFrameInfo.nHeight * 2)
+        else:
+            libc.memcpy(byref(img_buff), pData, stFrameInfo.nWidth * stFrameInfo.nHeight * 2)
+        data = np.frombuffer(img_buff, count=int(stFrameInfo.nWidth * stFrameInfo.nHeight * 2), dtype=np.uint8)
+        image_control(data=data, stFrameInfo=stFrameInfo)
+        del img_buff
 
 CALL_BACK_FUN = FrameInfoCallBack(image_callback)
 
@@ -717,7 +751,10 @@ def main():
         start_grab_and_get_data_size(cam)
         # 当使用 回调取流时，需要在此处添加
         print("press a key to stop grabbing.")
-        cdll.msvcrt.getch()
+        if sys.platform.startswith("win"):
+            msvcrt.getch()
+        else:
+            input("Press Enter to stop grabbing:")
         # 关闭设备与销毁句柄
         close_and_destroy_device(cam)
     elif int(stdcall) == 1:
